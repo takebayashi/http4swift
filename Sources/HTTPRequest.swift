@@ -22,12 +22,12 @@
  SOFTWARE.
 */
 
-struct HTTPRequest {
+public struct HTTPRequest {
 
-    var method: String
-    var path: String
-    var proto: String
-    var body: String
+    public let method: String
+    public let path: String
+    public let proto: String
+    public let body: String
 
     init(bytes: [CChar]) {
         let parsed = HTTPRequestParser(raw: bytes)

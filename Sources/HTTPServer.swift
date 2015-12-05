@@ -26,14 +26,14 @@
     import Darwin
 #endif
 
-typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) -> ()
+public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) -> ()
 
 public struct HTTPServer {
 
     var socket: Socket
     var address: SocketAddress
 
-    init?(socket: Socket, addr: SocketAddress) {
+    public init?(socket: Socket, addr: SocketAddress) {
         self.socket = socket
         self.address = addr
         if !socket.bindAddress(&address.underlying, length: socklen_t(UInt8(sizeof(sockaddr_in)))) {
@@ -41,7 +41,7 @@ public struct HTTPServer {
         }
     }
 
-    func serve(handler: HTTPHandler) {
+    public func serve(handler: HTTPHandler) {
         while (true) {
             if (listen(socket.underlying, 100) != 0) {
                 return

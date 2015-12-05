@@ -26,24 +26,24 @@
     import Darwin
 #endif
 
-struct Socket {
+public struct Socket {
 
     var underlying: Int32
 
-    init?(domain: Int32, type: Int32, proto: Int32 = 0) {
+    public init?(domain: Int32, type: Int32, proto: Int32 = 0) {
         underlying = socket(domain, Int32(type), proto)
         if underlying <= 0 {
             return nil
         }
     }
 
-    func bindAddress(address: UnsafeMutablePointer<Void>, length: socklen_t) -> Bool {
+    public func bindAddress(address: UnsafeMutablePointer<Void>, length: socklen_t) -> Bool {
         return bind(underlying, UnsafeMutablePointer<sockaddr>(address), length) == 0
     }
 
 }
 
-struct SocketAddress {
+public struct SocketAddress {
 
     var underlying: sockaddr_in
 
@@ -51,7 +51,7 @@ struct SocketAddress {
         return (value << 8) + (value >> 8);
     }
 
-    init(domain: Int32, port: UInt16) {
+    public init(domain: Int32, port: UInt16) {
         underlying = sockaddr_in(
             sin_len: __uint8_t(sizeof(sockaddr_in)),
             sin_family: sa_family_t(AF_INET),

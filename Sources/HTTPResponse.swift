@@ -26,7 +26,7 @@
     import Darwin
 #endif
 
-class HTTPResponseWriter {
+public class HTTPResponseWriter {
 
     let socket: Int32
 
@@ -34,7 +34,7 @@ class HTTPResponseWriter {
         self.socket = socket
     }
 
-    func write(content: String) {
+    public func write(content: String) {
         content.withCString { (bytes) in
             send(socket, bytes, Int(strlen(bytes)), 0)
         }
