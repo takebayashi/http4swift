@@ -86,7 +86,9 @@ class HTTPRequestParser {
                     }
                     else {
                         let field = line.characters.split(":", maxSplit: 2, allowEmptySlices: true)
-                        state.headers[String(field[0])] = String(field[1])
+                        let name = String(field[0])
+                        let value = String(field[1]).trimLeft(" ", maxCount: 1)
+                        state.headers[name] = value
                     }
                 }
                 else if state.mode == .Empty {
