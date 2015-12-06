@@ -24,6 +24,8 @@
 
 #if os(OSX)
     import Darwin
+#elseif os(Linux)
+    import Glibc
 #endif
 
 public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) -> ()

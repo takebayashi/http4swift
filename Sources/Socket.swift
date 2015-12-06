@@ -24,13 +24,22 @@
 
 #if os(OSX)
     import Darwin
+#elseif os(Linux)
+    import Glibc
 #endif
 
 public struct Socket {
 
+    static let defaultDomain: Int32 = AF_INET
+#if os(OSX)
+    static let defaultType: Int32 = SOCK_STREAM
+#else
+    static let defaultType: Int32 = Int32(SOCK_STREAM.rawValue)
+#endif
+
     var underlying: Int32
 
-    public init?(domain: Int32, type: Int32, proto: Int32 = 0) {
+    public init?(domain: Int32 = defaultDomain, type: Int32 = defaultType, proto: Int32 = 0) {
         underlying = socket(domain, Int32(type), proto)
         if underlying <= 0 {
             return nil
@@ -45,13 +54,16 @@ public struct Socket {
 
 public struct SocketAddress {
 
+    static let defaultDomain = AF_INET
+
     var underlying: sockaddr_in
 
     static func htons(value: CUnsignedShort) -> CUnsignedShort {
         return (value << 8) + (value >> 8);
     }
 
-    public init(domain: Int32, port: UInt16) {
+    public init(port: UInt16, domain: Int32 = defaultDomain) {
+#if os(OSX)
         underlying = sockaddr_in(
             sin_len: __uint8_t(sizeof(sockaddr_in)),
             sin_family: sa_family_t(AF_INET),
@@ -59,7 +71,14 @@ public struct SocketAddress {
             sin_addr: in_addr(s_addr: in_addr_t(0)),
             sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
         )
-
+#else
+        underlying = sockaddr_in(
+            sin_family: sa_family_t(AF_INET),
+            sin_port: SocketAddress.htons(port),
+            sin_addr: in_addr(s_addr: in_addr_t(0)),
+            sin_zero: (0, 0, 0, 0, 0, 0, 0, 0)
+        )
+#endif
     }
 
 }
