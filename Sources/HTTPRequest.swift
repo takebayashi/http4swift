@@ -63,6 +63,7 @@ class HTTPRequestParser {
         var method: String!
         var path: String!
         var proto: String!
+        var headers = [String: String]()
         var body: String!
     }
 
@@ -84,7 +85,8 @@ class HTTPRequestParser {
                         state.mode = .Empty
                     }
                     else {
-                        // TODO: Parse header
+                        let field = line.characters.split(":", maxSplit: 2, allowEmptySlices: true)
+                        state.headers[String(field[0])] = String(field[1])
                     }
                 }
                 else if state.mode == .Empty {
