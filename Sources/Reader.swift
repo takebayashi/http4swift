@@ -36,15 +36,14 @@ struct BufferedReader {
         var out = [CChar]()
         let buf = UnsafeMutablePointer<CChar>.alloc(ChunkSie)
         while true {
+            memset(buf, 0, ChunkSie)
             let size = read(socket, buf, ChunkSie)
-
             for i in 0..<ChunkSie {
                 out.append(buf[i])
             }
             if size < ChunkSie {
                 break
             }
-            memset(buf, 0, ChunkSie)
         }
         buf.dealloc(ChunkSie)
         return out

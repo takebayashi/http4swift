@@ -74,6 +74,7 @@ class HTTPRequestParser {
             if c == HTTPRequestParser.LF && state.mode != .Body {
                 var leftChars = [CChar](state.buffer)
                 leftChars.removeLast()
+                leftChars.append(0)
                 let line = String.fromCString(leftChars) ?? ""
                 if state.mode == .First {
                     let fields = line.characters.split(" ", maxSplit: 3, allowEmptySlices: true)
@@ -83,7 +84,7 @@ class HTTPRequestParser {
                     state.mode = .Header
                 }
                 else if state.mode == .Header {
-                    if line.isEmpty {
+                    if line.isEmpty || line.hasPrefix(String(HTTPRequestParser.CR)) {
                         state.mode = .Empty
                     }
                     else {
