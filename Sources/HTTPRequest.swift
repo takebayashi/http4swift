@@ -27,6 +27,7 @@ public struct HTTPRequest {
     public let method: String
     public let path: String
     public let proto: String
+    public let headers: [String: String]
     public let body: [UInt8]
 
     init(bytes: [CChar]) {
@@ -34,6 +35,7 @@ public struct HTTPRequest {
         self.method = parsed.method
         self.path = parsed.path
         self.proto = parsed.proto
+        self.headers = parsed.headers
         self.body = parsed.body
     }
 
@@ -54,6 +56,7 @@ class HTTPRequestParser {
     var method: String
     var path: String
     var proto: String
+    var headers: [String: String]
     var body: [UInt8]
 
     class State {
@@ -102,6 +105,7 @@ class HTTPRequestParser {
         method = parsed.method
         path = parsed.path
         proto = parsed.proto
+        headers = parsed.headers
         body = parsed.buffer.map { c in
             return UInt8(c)
         }
