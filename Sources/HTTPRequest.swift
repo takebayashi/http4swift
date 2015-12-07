@@ -84,7 +84,7 @@ class HTTPRequestParser {
                     state.mode = .Header
                 }
                 else if state.mode == .Header {
-                    if line.isEmpty || line.hasPrefix(String(HTTPRequestParser.CR)) {
+                    if line.isEmpty || line == String(HTTPRequestParser.CR) {
                         state.mode = .Empty
                     }
                     else {
