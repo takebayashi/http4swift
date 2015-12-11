@@ -28,7 +28,7 @@
     import Glibc
 #endif
 
-public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) -> ()
+public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) throws -> ()
 
 public struct HTTPServer {
 
@@ -55,7 +55,7 @@ public struct HTTPServer {
             do {
                 let bytes = try BufferedReader.readSocket(client)
                 let writer = HTTPResponseWriter(socket: client)
-                handler(HTTPRequest(bytes: bytes), writer)
+                try handler(HTTPRequest(bytes: bytes), writer)
             }
             catch let ReaderError.GenericError(error: no) {
                 fputs("reading error: \(no)", stderr)
