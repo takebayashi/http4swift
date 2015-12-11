@@ -57,8 +57,11 @@ public struct HTTPServer {
                 let writer = HTTPResponseWriter(socket: client)
                 handler(HTTPRequest(bytes: bytes), writer)
             }
-            catch let ReaderError.GenericError(error: c) {
-                fputs("reading error: \(c)", stderr)
+            catch let ReaderError.GenericError(error: no) {
+                fputs("reading error: \(no)", stderr)
+            }
+            catch let WriterError.GenericError(error: no) {
+                fputs("writing error: \(no)", stderr)
             }
             catch {
                 fputs("unknown error", stderr)

@@ -28,6 +28,10 @@
     import Glibc
 #endif
 
+enum WriterError: ErrorType {
+    case GenericError(error: Int32)
+}
+
 public class HTTPResponseWriter {
 
     let socket: Int32
@@ -36,9 +40,11 @@ public class HTTPResponseWriter {
         self.socket = socket
     }
 
-    public func write(content: String) {
-        content.withCString { (bytes) in
-            send(socket, bytes, Int(strlen(bytes)), 0)
+    public func write(content: String) throws {
+        try content.withCString { (bytes) in
+            if send(socket, bytes, Int(strlen(bytes)), 0) < 0 {
+                throw WriterError.GenericError(error: errno)
+            }
         }
     }
 
