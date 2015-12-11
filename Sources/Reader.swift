@@ -28,16 +28,23 @@
     import Glibc
 #endif
 
+enum ReaderError: ErrorType {
+    case GenericError(error: Int32)
+}
+
 struct BufferedReader {
 
     static let ChunkSie = 32
 
-    static func readSocket(socket: Int32) -> [CChar] {
+    static func readSocket(socket: Int32) throws -> [CChar] {
         var out = [CChar]()
         let buf = UnsafeMutablePointer<CChar>.alloc(ChunkSie)
         while true {
             memset(buf, 0, ChunkSie)
             let size = read(socket, buf, ChunkSie)
+            if size < 0 {
+                throw ReaderError.GenericError(error: errno)
+            }
             for i in 0..<ChunkSie {
                 out.append(buf[i])
             }

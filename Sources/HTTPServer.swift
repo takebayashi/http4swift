@@ -49,10 +49,20 @@ public struct HTTPServer {
                 return
             }
             let client = accept(socket.underlying, nil, nil)
-            let bytes = BufferedReader.readSocket(client)
-            let writer = HTTPResponseWriter(socket: client)
-            handler(HTTPRequest(bytes: bytes), writer)
-            close(client)
+            defer {
+                close(client)
+            }
+            do {
+                let bytes = try BufferedReader.readSocket(client)
+                let writer = HTTPResponseWriter(socket: client)
+                handler(HTTPRequest(bytes: bytes), writer)
+            }
+            catch let ReaderError.GenericError(error: c) {
+                fputs("reading error: \(c)", stderr)
+            }
+            catch {
+                fputs("unknown error", stderr)
+            }
         }
     }
 }
