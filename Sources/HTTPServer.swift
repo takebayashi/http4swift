@@ -63,8 +63,8 @@ public struct HTTPServer {
             catch let WriterError.GenericError(error: no) {
                 fputs("writing error: \(no)", stderr)
             }
-            catch {
-                fputs("unknown error", stderr)
+            catch let e {
+                fputs("unknown error: \(e)", stderr)
             }
         }
     }
