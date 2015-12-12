@@ -41,7 +41,7 @@ public class HTTPResponseWriter {
     }
 
     public func write(bytes: UnsafePointer<Int8>) throws {
-        if send(socket, bytes, Int(strlen(bytes)), 0) < 0 {
+        if send(socket, bytes, Int(strlen(bytes)) + 1, 0) < 0 {
             throw WriterError.GenericError(error: errno)
         }
     }
