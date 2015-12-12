@@ -40,11 +40,9 @@ public class HTTPResponseWriter {
         self.socket = socket
     }
 
-    public func write(content: String) throws {
-        try content.withCString { (bytes) in
-            if send(socket, bytes, Int(strlen(bytes)), 0) < 0 {
-                throw WriterError.GenericError(error: errno)
-            }
+    public func write(bytes: UnsafePointer<Int8>) throws {
+        if send(socket, bytes, Int(strlen(bytes)), 0) < 0 {
+            throw WriterError.GenericError(error: errno)
         }
     }
 

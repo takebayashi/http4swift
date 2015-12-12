@@ -36,9 +36,9 @@ struct BufferedReader {
 
     static let ChunkSie = 32
 
-    static func readSocket(socket: Int32) throws -> [CChar] {
-        var out = [CChar]()
-        let buf = UnsafeMutablePointer<CChar>.alloc(ChunkSie)
+    static func readSocket(socket: Int32) throws -> [Int8] {
+        var out = [Int8]()
+        let buf = UnsafeMutablePointer<Int8>.alloc(ChunkSie)
         while true {
             memset(buf, 0, ChunkSie)
             let size = read(socket, buf, ChunkSie)
