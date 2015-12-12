@@ -28,9 +28,9 @@ public struct HTTPRequest {
     public let path: String
     public let proto: String
     public let headers: [String: String]
-    public let body: [CChar]
+    public let body: [Int8]
 
-    init(bytes: [CChar]) {
+    init(bytes: [Int8]) {
         let parsed = HTTPRequestParser(raw: bytes)
         self.method = parsed.method
         self.path = parsed.path
@@ -57,11 +57,11 @@ class HTTPRequestParser {
     var path: String
     var proto: String
     var headers: [String: String]
-    var body: [CChar]
+    var body: [Int8]
 
     class State {
         var mode = Mode.First
-        var buffer = [CChar]()
+        var buffer = [Int8]()
 
         var method: String!
         var path: String!
@@ -69,7 +69,7 @@ class HTTPRequestParser {
         var headers = [String: String]()
     }
 
-    init(raw: [CChar]) {
+    init(raw: [Int8]) {
         let parsed = raw.reduce(State()) { (state, c) in
             if c == HTTPRequestParser.LF && state.mode != .Body {
                 var leftChars = [CChar](state.buffer)
