@@ -32,28 +32,100 @@ enum ReaderError: ErrorType {
     case GenericError(error: Int32)
 }
 
-struct BufferedReader {
+protocol Reader {
 
-    static let ChunkSie = 32
+    typealias Entry
 
-    static func readSocket(socket: Int32) throws -> [Int8] {
-        var out = [Int8]()
-        let buf = UnsafeMutablePointer<Int8>.alloc(ChunkSie)
+    func read() throws -> Entry?
+
+    func read(maxLength: Int) throws -> [Entry]
+
+}
+
+class SocketReader: Reader {
+
+    typealias Entry = Int8
+
+    let socket: Int32
+
+    init(socket: Int32) {
+        self.socket = socket
+    }
+
+    func read() throws -> Int8? {
+        return try read(1).first
+    }
+
+    func read(maxLength: Int) throws -> [Int8] {
+        let buffer = UnsafeMutablePointer<Int8>.alloc(maxLength)
+        memset(buffer, 0, maxLength)
+        let size = recv(socket, buffer, maxLength, 0)
+        if size < 0 {
+            throw ReaderError.GenericError(error: errno)
+        }
+        var bytes = [Int8]()
+        for i in 0..<maxLength {
+            bytes.append(buffer[i])
+        }
+        buffer.dealloc(maxLength)
+        return bytes
+    }
+
+}
+
+let LF = Int8(10)
+
+class BufferedReader<R: Reader where R.Entry == Int8>: Reader {
+
+    typealias Entry = [Int8]
+
+    let reader: R
+
+    init(reader: R) {
+        self.reader = reader
+    }
+
+    var buffer = [Int8]()
+
+    func flush() -> [Int8]? {
+        for i in 0..<buffer.count {
+            if buffer[i] == LF {
+                return [Int8](buffer.dropFirst(i + 1))
+            }
+        }
+        return nil
+    }
+
+    func read() throws -> [Int8]? {
+        if let line = flush() {
+            return line
+        }
         while true {
-            memset(buf, 0, ChunkSie)
-            let size = read(socket, buf, ChunkSie)
-            if size < 0 {
-                throw ReaderError.GenericError(error: errno)
+            let chunk = try reader.read(128)
+            if chunk.count == 0 {
+                if buffer.count == 0 {
+                    return nil
+                }
+                return buffer
             }
-            for i in 0..<ChunkSie {
-                out.append(buf[i])
+            buffer.appendContentsOf(chunk)
+            if let line = flush() {
+                return line
             }
-            if size < ChunkSie {
+        }
+    }
+
+    func read(maxLength: Int) throws -> [[Int8]] {
+        var lines = [[Int8]]()
+        for _ in 0..<maxLength {
+            if let line = try read() {
+                lines.append(line)
+            }
+            else {
                 break
             }
         }
-        buf.dealloc(ChunkSie)
-        return out
+        return lines
     }
 
 }
