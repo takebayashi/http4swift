@@ -64,7 +64,7 @@ class SocketReader: Reader {
             throw ReaderError.GenericError(error: errno)
         }
         var bytes = [Int8]()
-        for i in 0..<maxLength {
+        for i in 0..<size {
             bytes.append(buffer[i])
         }
         buffer.dealloc(maxLength)
@@ -87,6 +87,8 @@ class BufferedReader<R: Reader where R.Entry == Int8>: Reader {
 
     var buffer = [Int8]()
 
+    var reading = true
+
     func flush() -> [Int8]? {
         let size = buffer.count
         for i in 0..<size {
@@ -108,19 +110,26 @@ class BufferedReader<R: Reader where R.Entry == Int8>: Reader {
         if let line = flush() {
             return line
         }
-        while true {
-            let chunk = try reader.read(128)
+        let batch = 128
+        while reading {
+            let chunk = try reader.read(batch)
             if chunk.count == 0 {
-                if buffer.count == 0 {
-                    return nil
-                }
-                return buffer
+                reading = false
+            }
+            else if chunk.count < batch {
+                reading = false
             }
             buffer.appendContentsOf(chunk)
             if let line = flush() {
                 return line
             }
         }
+        if buffer.count > 0 {
+            let line = buffer
+            buffer.removeAll()
+            return line
+        }
+        return nil
     }
 
     func read(maxLength: Int) throws -> [[Int8]] {
