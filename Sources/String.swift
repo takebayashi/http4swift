@@ -39,4 +39,19 @@ extension String {
         return self
     }
 
+    func trimRight(char: Character, maxCount: Int = -1) -> String {
+        if self.isEmpty {
+            return ""
+        }
+        if self[self.endIndex.predecessor()] == char {
+            let sub = self[self.startIndex..<self.endIndex.predecessor()]
+            if maxCount == 1 {
+                return sub
+            }
+            let nextCount = maxCount > 1 ? maxCount - 1 : self.characters.count
+            return sub.trimRight(char, maxCount: nextCount)
+        }
+        return self
+    }
+
 }
