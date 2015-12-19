@@ -53,9 +53,9 @@ public struct HTTPServer {
                 close(client)
             }
             do {
-                let bytes = try BufferedReader.readSocket(client)
+                let reader = SocketReader(socket: client)
                 let writer = HTTPResponseWriter(socket: client)
-                try handler(HTTPRequest(bytes: bytes), writer)
+                try handler(HTTPRequest.Parser.parse(reader), writer)
             }
             catch let ReaderError.GenericError(error: no) {
                 fputs("reading error: \(no)", stderr)

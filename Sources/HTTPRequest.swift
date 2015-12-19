@@ -30,85 +30,67 @@ public struct HTTPRequest {
     public let headers: [String: String]
     public let body: [Int8]
 
-    init(bytes: [Int8]) {
-        let parsed = HTTPRequestParser(raw: bytes)
-        self.method = parsed.method
-        self.path = parsed.path
-        self.proto = parsed.proto
-        self.headers = parsed.headers
-        self.body = parsed.body
+    init(method: String, path: String, version: String, headers: [String: String], body: [Int8]) {
+        self.method = method
+        self.path = path
+        self.proto = version
+        self.headers = headers
+        self.body = body
     }
 
-}
 
-class HTTPRequestParser {
+    class Parser {
 
-    static let LF = CChar(10)
-    static let CR = CChar(13)
+        static let LF = Character("\010")
+        static let CR = Character("\013")
 
-    enum Mode {
-        case First
-        case Header
-        case Empty
-        case Body
-    }
+        enum Mode {
+            case First
+            case Header
+            case Empty
+            case Body
+        }
 
-    var method: String
-    var path: String
-    var proto: String
-    var headers: [String: String]
-    var body: [Int8]
+        static func parse<R: Reader where R.Entry == Int8>(reader: R) -> HTTPRequest {
+            let bufferedReader = BufferedReader(reader: reader)
+            var mode = Mode.First
 
-    class State {
-        var mode = Mode.First
-        var buffer = [Int8]()
+            var method: String!
+            var path: String!
+            var version: String!
+            var headers = [String: String]()
+            var body = [Int8]()
 
-        var method: String!
-        var path: String!
-        var proto: String!
-        var headers = [String: String]()
-    }
-
-    init(raw: [Int8]) {
-        let parsed = raw.reduce(State()) { (state, c) in
-            if c == HTTPRequestParser.LF && state.mode != .Body {
-                var leftChars = [CChar](state.buffer)
-                leftChars.removeLast()
-                leftChars.append(0)
-                let line = String.fromCString(leftChars) ?? ""
-                if state.mode == .First {
-                    let fields = line.characters.split(" ", maxSplit: 3, allowEmptySlices: true)
-                    state.method = String(fields[0])
-                    state.path = String(fields[1])
-                    state.proto = String(fields[2])
-                    state.mode = .Header
-                }
-                else if state.mode == .Header {
-                    if line.isEmpty || line == String(HTTPRequestParser.CR) {
-                        state.mode = .Empty
+            while let line = try! bufferedReader.read() {
+                let str = (String.fromCString(line) ?? "").trimRight(LF).trimRight(CR)
+                switch mode {
+                case .First:
+                    let fields = str.characters.split(" ", maxSplit: 3, allowEmptySlices: true)
+                    method = String(fields[0])
+                    path = String(fields[1])
+                    version = String(fields[2])
+                    mode = .Header
+                case .Header:
+                    if str.isEmpty {
+                        mode = .Empty
                     }
                     else {
-                        let field = line.characters.split(":", maxSplit: 2, allowEmptySlices: true)
+                        let field = str.characters.split(":", maxSplit: 2, allowEmptySlices: true)
                         let name = String(field[0])
                         let value = String(field[1]).trimLeft(" ", maxCount: 1)
-                        state.headers[name] = value
+                        headers[name] = value
                     }
+                case .Empty:
+                    mode = .Body
+                case .Body:
+                    body.appendContentsOf(line)
                 }
-                else if state.mode == .Empty {
-                    state.mode = .Body
-                }
-                state.buffer.removeAll()
-                return state
             }
-            state.buffer.append(c)
-            return state
+
+            return HTTPRequest(method: method, path: path, version: version, headers: headers, body: body)
         }
-        method = parsed.method
-        path = parsed.path
-        proto = parsed.proto
-        headers = parsed.headers
-        body = parsed.buffer
-        body.append(0)
+
     }
 
 }
+
