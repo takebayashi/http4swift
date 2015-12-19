@@ -41,8 +41,8 @@ public struct HTTPRequest {
 
     class Parser {
 
-        static let LF = Character("\010")
-        static let CR = Character("\013")
+        static let LF = Character("\n")
+        static let CR = Character("\r")
 
         enum Mode {
             case First
