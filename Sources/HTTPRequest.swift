@@ -83,6 +83,7 @@ public struct HTTPRequest {
                     }
                 case .Empty:
                     mode = .Body
+                    fallthrough
                 case .Body:
                     body.appendContentsOf(line)
                 }
