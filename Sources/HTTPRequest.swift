@@ -41,8 +41,7 @@ public struct HTTPRequest {
 
     class Parser {
 
-        static let LF = Character("\n")
-        static let CR = Character("\r")
+        static let CRLF = Character("\r\n")
 
         enum Mode {
             case First
@@ -62,7 +61,9 @@ public struct HTTPRequest {
             var body = [Int8]()
 
             while let line = try! bufferedReader.read() {
-                let str = (String.fromCString(line) ?? "").trimRight(LF).trimRight(CR)
+                var bytes = line
+                bytes.append(0)
+                let str = (String.fromCString(bytes) ?? "").trimRight(CRLF)
                 switch mode {
                 case .First:
                     let fields = str.characters.split(" ", maxSplit: 3, allowEmptySlices: true)

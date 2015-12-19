@@ -88,9 +88,17 @@ class BufferedReader<R: Reader where R.Entry == Int8>: Reader {
     var buffer = [Int8]()
 
     func flush() -> [Int8]? {
-        for i in 0..<buffer.count {
+        let size = buffer.count
+        for i in 0..<size {
             if buffer[i] == LF {
-                return [Int8](buffer.dropFirst(i + 1))
+                let line = [Int8](buffer[0...i])
+                if i + 1 >= size {
+                    buffer = []
+                }
+                else {
+                    buffer = [Int8](buffer[(i + 1)..<size])
+                }
+                return line
             }
         }
         return nil
