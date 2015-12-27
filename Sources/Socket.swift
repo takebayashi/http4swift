@@ -59,7 +59,7 @@ public struct SocketAddress {
     var underlying: sockaddr_in
 
     static func htons(value: CUnsignedShort) -> CUnsignedShort {
-        return (value << 8) + (value >> 8);
+        return value.bigEndian
     }
 
     public init(port: UInt16, domain: Int32 = defaultDomain) {
