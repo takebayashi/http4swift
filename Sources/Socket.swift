@@ -46,6 +46,10 @@ public struct Socket {
         }
     }
 
+    public init(raw: Int32) {
+        underlying = raw
+    }
+
     public func bindAddress(address: UnsafeMutablePointer<Void>, length: socklen_t) -> Bool {
         return bind(underlying, UnsafeMutablePointer<sockaddr>(address), length) == 0
     }
