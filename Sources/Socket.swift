@@ -37,21 +37,21 @@ public struct Socket {
     static let defaultType: Int32 = Int32(SOCK_STREAM.rawValue)
 #endif
 
-    var underlying: Int32
+    var raw: Int32
 
     public init?(domain: Int32 = defaultDomain, type: Int32 = defaultType, proto: Int32 = 0) {
-        underlying = socket(domain, Int32(type), proto)
-        if underlying <= 0 {
+        raw = socket(domain, Int32(type), proto)
+        if raw <= 0 {
             return nil
         }
     }
 
     public init(raw: Int32) {
-        underlying = raw
+        self.raw = raw
     }
 
     public func bindAddress(address: UnsafeMutablePointer<Void>, length: socklen_t) -> Bool {
-        return bind(underlying, UnsafeMutablePointer<sockaddr>(address), length) == 0
+        return bind(raw, UnsafeMutablePointer<sockaddr>(address), length) == 0
     }
 
     public func setOption(option: Int32, value: Int32) {

@@ -51,10 +51,10 @@ public struct HTTPServer {
 
     public func serve(handler: HTTPHandler) {
         while (true) {
-            if (listen(socket.underlying, 100) != 0) {
+            if (listen(socket.raw, 100) != 0) {
                 return
             }
-            let client = accept(socket.underlying, nil, nil)
+            let client = accept(socket.raw, nil, nil)
             defer {
                 shutdown(client, Int32(SHUT_RDWR))
                 close(client)
