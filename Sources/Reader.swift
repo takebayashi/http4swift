@@ -46,9 +46,9 @@ class SocketReader: Reader {
 
     typealias Entry = Int8
 
-    let socket: Int32
+    let socket: Socket
 
-    init(socket: Int32) {
+    init(socket: Socket) {
         self.socket = socket
     }
 
@@ -59,7 +59,7 @@ class SocketReader: Reader {
     func read(maxLength: Int) throws -> [Int8] {
         let buffer = UnsafeMutablePointer<Int8>.alloc(maxLength)
         memset(buffer, 0, maxLength)
-        let size = recv(socket, buffer, maxLength, 0)
+        let size = recv(socket.raw, buffer, maxLength, 0)
         if size < 0 {
             throw ReaderError.GenericError(error: errno)
         }

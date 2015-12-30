@@ -60,7 +60,7 @@ public struct HTTPServer {
                 close(client)
             }
             do {
-                let reader = SocketReader(socket: client)
+                let reader = SocketReader(socket: Socket(raw: client))
                 let writer = HTTPResponseWriter(socket: client)
                 try handler(HTTPRequest.Parser.parse(reader), writer)
             }
