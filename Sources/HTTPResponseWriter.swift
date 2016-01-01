@@ -41,9 +41,15 @@ public class HTTPResponseWriter {
     }
 
     public func write(bytes: UnsafePointer<Int8>) throws {
+#if os(Linux)
+        let flags = Int32(MSG_NOSIGNAL)
+#else
+        let flags = Int32(0)
+#endif
+
         var rest = Int(strlen(bytes))
         while rest > 0 {
-            let sent = send(socket, bytes, rest, 0)
+            let sent = send(socket, bytes, rest, flags)
             if sent < 0 {
                 throw WriterError.GenericError(error: errno)
             }
