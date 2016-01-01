@@ -56,6 +56,7 @@ public struct HTTPServer {
             }
             let client = accept(socket.underlying, nil, nil)
             defer {
+                shutdown(client, Int32(SHUT_RDWR))
                 close(client)
             }
             do {
