@@ -50,17 +50,21 @@ public struct HTTPRequest {
             case Body
         }
 
-        static func parse<R: Reader where R.Entry == Int8>(reader: R) -> HTTPRequest {
+        enum ParserError: ErrorType {
+            case InvalidRequest(details: String)
+        }
+
+        static func parse<R: Reader where R.Entry == Int8>(reader: R) throws -> HTTPRequest {
             let bufferedReader = BufferedReader(reader: reader)
             var mode = Mode.First
 
-            var method: String!
-            var path: String!
-            var version: String!
+            var method: String?
+            var path: String?
+            var version: String?
             var headers = [String: String]()
             var body = [Int8]()
 
-            while let line = try! bufferedReader.read() {
+            while let line = try bufferedReader.read() {
                 var bytes = line
                 bytes.append(0)
                 let str = (String.fromCString(bytes) ?? "").trimRight(CRLF)
@@ -89,7 +93,19 @@ public struct HTTPRequest {
                 }
             }
 
-            return HTTPRequest(method: method, path: path, version: version, headers: headers, body: body)
+            guard let parsedMethod = method else {
+                throw ParserError.InvalidRequest(details: "Missing HTTP request method")
+            }
+
+            guard let parsedPath = path else {
+                throw ParserError.InvalidRequest(details: "Missing HTTP request path")
+            }
+
+            guard let parsedVersion = version else {
+                throw ParserError.InvalidRequest(details: "Missing HTTP request version")
+            }
+
+            return HTTPRequest(method: parsedMethod, path: parsedPath, version: parsedVersion, headers: headers, body: body)
         }
 
     }

@@ -63,6 +63,9 @@ public struct HTTPServer {
             catch let WriterError.GenericError(error: no) {
                 fputs("writing error: \(no)\n", stderr)
             }
+            catch let HTTPRequest.Parser.ParserError.InvalidRequest(details: details) {
+                fputs("Invalid HTTP request error: \(details)\n", stderr)
+            }
             catch let e {
                 fputs("unknown error: \(e)\n", stderr)
             }
