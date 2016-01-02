@@ -38,6 +38,12 @@ public struct HTTPServer {
     public init?(socket: Socket, addr: SocketAddress) {
         self.socket = socket
         self.address = addr
+
+        socket.setOption(SO_REUSEADDR, value: 1)
+#if !os(Linux)
+        socket.setOption(SO_NOSIGPIPE, value: 1)
+#endif
+
         if !socket.bindAddress(&address.underlying, length: socklen_t(UInt8(sizeof(sockaddr_in)))) {
             return nil
         }
@@ -50,6 +56,7 @@ public struct HTTPServer {
             }
             let client = accept(socket.underlying, nil, nil)
             defer {
+                shutdown(client, Int32(SHUT_RDWR))
                 close(client)
             }
             do {

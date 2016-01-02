@@ -50,6 +50,10 @@ public struct Socket {
         return bind(underlying, UnsafeMutablePointer<sockaddr>(address), length) == 0
     }
 
+    public func setOption(option: Int32, value: Int32) {
+        var val = value
+        setsockopt(underlying, SOL_SOCKET, option, &val, socklen_t(sizeof(Int32)))
+    }
 }
 
 public struct SocketAddress {
