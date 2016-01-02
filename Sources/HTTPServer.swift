@@ -65,13 +65,16 @@ public struct HTTPServer {
                 try handler(HTTPRequest.Parser.parse(reader), writer)
             }
             catch let ReaderError.GenericError(error: no) {
-                fputs("reading error: \(no)", stderr)
+                fputs("reading error: \(no)\n", stderr)
             }
             catch let WriterError.GenericError(error: no) {
-                fputs("writing error: \(no)", stderr)
+                fputs("writing error: \(no)\n", stderr)
+            }
+            catch let HTTPRequest.Parser.ParserError.InvalidRequest(details: details) {
+                fputs("Invalid HTTP request error: \(details)\n", stderr)
             }
             catch let e {
-                fputs("unknown error: \(e)", stderr)
+                fputs("unknown error: \(e)\n", stderr)
             }
         }
     }
