@@ -56,7 +56,7 @@ public struct Socket {
 
     public func setOption(option: Int32, value: Int32) {
         var val = value
-        setsockopt(underlying, SOL_SOCKET, option, &val, socklen_t(sizeof(Int32)))
+        setsockopt(raw, SOL_SOCKET, option, &val, socklen_t(sizeof(Int32)))
     }
 }
 
