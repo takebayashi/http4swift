@@ -73,6 +73,36 @@ class SocketReader: Reader {
 
 }
 
+class BufferReader: Reader {
+
+    typealias Entry = Int8
+
+    var buffer: [Int8]
+
+    init(buffer: [Int8]) {
+        self.buffer = buffer
+    }
+
+    func read() throws -> Int8? {
+        if let first = buffer.first {
+            buffer = [Int8](buffer[1..<buffer.endIndex])
+            return first
+        }
+        return nil
+    }
+
+    func read(maxLength: Int) throws -> [Int8] {
+        var bytes = [Int8]()
+        for _ in 0..<maxLength {
+            if let byte = try self.read() {
+                bytes.append(byte)
+            }
+        }
+        return bytes
+    }
+
+}
+
 let LF = Int8(10)
 
 class BufferedReader<R: Reader where R.Entry == Int8>: Reader {

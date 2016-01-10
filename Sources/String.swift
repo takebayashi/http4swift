@@ -54,4 +54,20 @@ extension String {
         return self
     }
 
+    func bytes() -> [Int8] {
+        var buffer = [Int8]()
+        withCString { raw in
+            var bytes = raw
+            while true {
+                let byte = bytes.memory
+                buffer.append(byte)
+                if byte == 0 {
+                    break
+                }
+                bytes = bytes.advancedBy(1)
+            }
+        }
+        return buffer
+    }
+
 }
