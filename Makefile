@@ -1,5 +1,7 @@
 SWIFTC=swiftc
 
+TEST_DEP_LIBS = http4swift Nest
+
 ifeq ($(shell uname), Linux)
 	SWIFTC_OPTS="-lswiftGlibc"
 else
@@ -12,8 +14,8 @@ clean:
 
 build:
 	swift build --configuration debug
-	cp .build/debug/http4swift.a .build/debug/libhttp4swift.a
+	$(foreach lib,$(TEST_DEP_LIBS), cp .build/debug/$(lib).a .build/debug/lib$(lib).a;)
 
 test: build
-	$(SWIFTC) $(SWIFTC_OPTS) -I.build/debug Tests/*.swift -o .build/test -v -L.build/debug -lhttp4swift
+	$(SWIFTC) $(SWIFTC_OPTS) -I.build/debug Tests/*.swift -o .build/test -v -L.build/debug $(foreach lib,$(TEST_DEP_LIBS),-l$(lib))
 	.build/test

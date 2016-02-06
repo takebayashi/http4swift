@@ -22,20 +22,28 @@
  SOFTWARE.
 */
 
-public struct HTTPRequest {
+import Nest
+
+public struct HTTPRequest: RequestType {
 
     public let method: String
     public let path: String
     public let proto: String
-    public let headers: [String: String]
-    public let body: [Int8]
+    public let headers: [Header]
+    public let bodyBytes: [Int8]
 
-    init(method: String, path: String, version: String, headers: [String: String], body: [Int8]) {
+    init(method: String, path: String, version: String, headers: [Header], body: [Int8]) {
         self.method = method
         self.path = path
         self.proto = version
         self.headers = headers
-        self.body = body
+        self.bodyBytes = body
+    }
+
+    public var body: String? {
+        get {
+            return String.fromCString(bodyBytes)
+        }
     }
 
 
@@ -61,7 +69,7 @@ public struct HTTPRequest {
             var method: String?
             var path: String?
             var version: String?
-            var headers = [String: String]()
+            var headers = [Header]()
             var body = [Int8]()
 
             while let line = try bufferedReader.read() {
@@ -83,7 +91,7 @@ public struct HTTPRequest {
                         let field = str.characters.split(":", maxSplit: 2, allowEmptySlices: true)
                         let name = String(field[0])
                         let value = String(field[1]).trimLeft(" ", maxCount: 1)
-                        headers[name] = value
+                        headers.append(Header(name, value))
                     }
                 case .Empty:
                     mode = .Body

@@ -41,7 +41,8 @@ class HTTPRequestTests: TestCase {
 
         assert(parsed.method == "POST", "pasing HTTP request method")
         assert(parsed.path == "/foo/bar", "pasing HTTP request path")
-        assert(parsed.body == "post_body".bytes(), "parsing HTTP request body")
+        assert(parsed.body == "post_body", "parsing HTTP request body")
+        assert(parsed.bodyBytes == "post_body".bytes(), "parsing HTTP request body")
     }
 
 }
