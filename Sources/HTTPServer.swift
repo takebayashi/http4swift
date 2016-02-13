@@ -28,7 +28,9 @@
     import Glibc
 #endif
 
-public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) throws -> ()
+import Nest
+
+public typealias HTTPHandler = (RequestType, HTTPResponseWriter) throws -> ()
 
 public struct HTTPServer {
 
@@ -49,7 +51,7 @@ public struct HTTPServer {
         }
     }
 
-    public func serve(handler: HTTPHandler) {
+    public func serve(handler: Application) {
         while (true) {
             if (listen(socket.raw, 100) != 0) {
                 return
@@ -59,22 +61,19 @@ public struct HTTPServer {
                 shutdown(client, Int32(SHUT_RDWR))
                 close(client)
             }
+            let reader = SocketReader(socket: Socket(raw: client))
+            let writer = HTTPResponseWriter(socket: client)
             do {
-                let reader = SocketReader(socket: Socket(raw: client))
-                let writer = HTTPResponseWriter(socket: client)
-                try handler(HTTPRequest.Parser.parse(reader), writer)
-            }
-            catch let ReaderError.GenericError(error: no) {
-                fputs("reading error: \(no)\n", stderr)
-            }
-            catch let WriterError.GenericError(error: no) {
-                fputs("writing error: \(no)\n", stderr)
-            }
-            catch let HTTPRequest.Parser.ParserError.InvalidRequest(details: details) {
-                fputs("Invalid HTTP request error: \(details)\n", stderr)
+                let response = handler(try HTTPRequest.Parser.parse(reader))
+                try writer.write("\(response.statusLine)\r\n")
+                for header in response.headers {
+                    try writer.write("\(header.0): \(header.1)\r\n")
+                }
+                try writer.write("\r\n")
+                try writer.write(response.body!.bytes())
             }
             catch let e {
-                fputs("unknown error: \(e)\n", stderr)
+                fputs("error: \(e)\n", stderr)
             }
         }
     }
