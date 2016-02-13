@@ -30,7 +30,7 @@
 
 import Nest
 
-public typealias HTTPHandler = (RequestType, HTTPResponseWriter) throws -> ()
+public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) throws -> ()
 
 public struct HTTPServer {
 
@@ -51,6 +51,7 @@ public struct HTTPServer {
         }
     }
 
+    // Nest handler
     public func serve(handler: Application) {
         while (true) {
             if (listen(socket.raw, 100) != 0) {
@@ -71,6 +72,29 @@ public struct HTTPServer {
                 }
                 try writer.write("\r\n")
                 try writer.write(response.body!.bytes())
+            }
+            catch let e {
+                fputs("error: \(e)\n", stderr)
+            }
+        }
+    }
+
+    // native handler - deprecated
+    @available(*, deprecated)
+    public func serve(handler: HTTPHandler) {
+        while (true) {
+            if (listen(socket.raw, 100) != 0) {
+                return
+            }
+            let client = accept(socket.raw, nil, nil)
+            defer {
+                shutdown(client, Int32(SHUT_RDWR))
+                close(client)
+            }
+            let reader = SocketReader(socket: Socket(raw: client))
+            let writer = HTTPResponseWriter(socket: client)
+            do {
+                try handler(HTTPRequest.Parser.parse(reader), writer)
             }
             catch let e {
                 fputs("error: \(e)\n", stderr)
