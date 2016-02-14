@@ -65,7 +65,7 @@ public struct HTTPServer {
             let reader = SocketReader(socket: Socket(raw: client))
             let writer = HTTPResponseWriter(socket: client)
             do {
-                let response = handler(try HTTPRequest.Parser.parse(reader))
+                let response = handler(try DefaultHTTPRequestParser().parse(reader))
                 try writer.write("\(response.statusLine)\r\n")
                 for header in response.headers {
                     try writer.write("\(header.0): \(header.1)\r\n")
@@ -94,7 +94,7 @@ public struct HTTPServer {
             let reader = SocketReader(socket: Socket(raw: client))
             let writer = HTTPResponseWriter(socket: client)
             do {
-                try handler(HTTPRequest.Parser.parse(reader), writer)
+                try handler(DefaultHTTPRequestParser().parse(reader), writer)
             }
             catch let e {
                 fputs("error: \(e)\n", stderr)

@@ -37,7 +37,7 @@ class HTTPRequestTests: TestCase {
             CRLF +
             "post_body"
         let reader = BufferReader(buffer: r.bytes())
-        let parsed = try! HTTPRequest.Parser.parse(reader)
+        let parsed = try! DefaultHTTPRequestParser().parse(reader)
 
         assert(parsed.method == "POST", "pasing HTTP request method")
         assert(parsed.path == "/foo/bar", "pasing HTTP request path")
