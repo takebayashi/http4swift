@@ -22,6 +22,8 @@
  SOFTWARE.
 */
 
+import Nest
+
 #if os(OSX)
     import Darwin
 #elseif os(Linux)
@@ -55,6 +57,15 @@ public class HTTPResponseWriter {
             }
             rest -= sent
         }
+    }
+
+    public func write(response: ResponseType) throws {
+        try write("\(response.statusLine)\r\n")
+        for header in response.headers {
+            try write("\(header.0): \(header.1)\r\n")
+        }
+        try write("\r\n")
+        try write(response.body!.bytes())
     }
 
 }
