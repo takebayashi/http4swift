@@ -60,7 +60,7 @@ public class HTTPResponseWriter {
     }
 
     public func write(response: ResponseType) throws {
-        try write("\(response.statusLine)\r\n")
+        try write("HTTP/1.0 \(response.statusLine)\r\n")
         for header in response.headers {
             try write("\(header.0): \(header.1)\r\n")
         }

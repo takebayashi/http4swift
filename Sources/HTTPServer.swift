@@ -53,24 +53,9 @@ public struct HTTPServer {
 
     // Nest handler
     public func serve(handler: Application) {
-        while (true) {
-            if (listen(socket.raw, 100) != 0) {
-                return
-            }
-            let client = accept(socket.raw, nil, nil)
-            defer {
-                shutdown(client, Int32(SHUT_RDWR))
-                close(client)
-            }
-            let reader = SocketReader(socket: Socket(raw: client))
-            let writer = HTTPResponseWriter(socket: client)
-            do {
-                let response = handler(try DefaultHTTPRequestParser().parse(reader))
-                try writer.write(response)
-            }
-            catch let e {
-                fputs("error: \(e)\n", stderr)
-            }
+        serve { (req: HTTPRequest, writer: HTTPResponseWriter) throws in
+            let response = handler(req)
+            try writer.write(response)
         }
     }
 
