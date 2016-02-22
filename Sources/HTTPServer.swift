@@ -51,7 +51,7 @@ public struct HTTPServer {
         }
     }
 
-    // Nest handler
+    // Nest handler - recommended
     public func serve(handler: Application) {
         serve { (req: HTTPRequest, writer: HTTPResponseWriter) throws in
             let response = handler(req)
@@ -59,8 +59,7 @@ public struct HTTPServer {
         }
     }
 
-    // native handler - deprecated
-    @available(*, deprecated)
+    // native handler
     public func serve(handler: HTTPHandler) {
         while (true) {
             if (listen(socket.raw, 100) != 0) {
