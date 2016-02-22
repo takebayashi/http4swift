@@ -61,11 +61,22 @@ public class HTTPResponseWriter {
 
     public func write(response: ResponseType) throws {
         try write("HTTP/1.0 \(response.statusLine)\r\n")
+        var lengthWrote = false
         for header in response.headers {
             try write("\(header.0): \(header.1)\r\n")
+            if header.0 == "Content-Length" {
+                lengthWrote = true
+            }
+        }
+        if !lengthWrote {
+            if let bytes = response.body?.bytes() {
+                try write("Content-Length: \(bytes.count - 1)\r\n")
+            }
         }
         try write("\r\n")
-        try write(response.body!.bytes())
+        if let body = response.body?.bytes() {
+            try write(body)
+        }
     }
 
 }
