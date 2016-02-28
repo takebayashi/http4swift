@@ -23,6 +23,7 @@
 */
 
 import Nest
+import SwallowIO
 
 enum HTTPRequestParserError: ErrorType {
     case InvalidRequest(details: String)
@@ -30,7 +31,7 @@ enum HTTPRequestParserError: ErrorType {
 
 protocol HTTPRequestParser {
 
-    func parse<R: Reader where R.Entry == Int8>(reader: R) throws -> HTTPRequest
+    func parse<R: Reader where R.Entry == Byte>(reader: R) throws -> HTTPRequest
 
 }
 
@@ -45,8 +46,8 @@ class DefaultHTTPRequestParser: HTTPRequestParser {
         case Body
     }
 
-    func parse<R: Reader where R.Entry == Int8>(reader: R) throws -> HTTPRequest {
-        let bufferedReader = BufferedReader(reader: reader)
+    func parse<R: Reader where R.Entry == Byte>(reader: R) throws -> HTTPRequest {
+        let lineReader = LineBufferedReader(reader: reader)
         var mode = Mode.First
 
         var method: String?
@@ -55,8 +56,8 @@ class DefaultHTTPRequestParser: HTTPRequestParser {
         var headers = [Header]()
         var body = [Int8]()
 
-        while let line = try bufferedReader.read() {
-            var bytes = line
+        while let line = try lineReader.read() {
+            var bytes = line.map { CChar($0) }
             bytes.append(0)
             let str = (String.fromCString(bytes) ?? "").trimRight(DefaultHTTPRequestParser.CRLF)
             switch mode {
@@ -80,7 +81,7 @@ class DefaultHTTPRequestParser: HTTPRequestParser {
                 mode = .Body
                 fallthrough
             case .Body:
-                body.appendContentsOf(line)
+                body.appendContentsOf(line.map { Int8($0) })
             }
         }
 

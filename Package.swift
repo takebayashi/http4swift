@@ -28,5 +28,6 @@ let package = Package(
     name: "http4swift",
     dependencies: [
         .Package(url: "https://github.com/nestproject/Nest.git", majorVersion: 0, minor: 2),
+        .Package(url: "https://github.com/takebayashi/SwallowIO.git", majorVersion: 0, minor: 0),
     ]
 )
