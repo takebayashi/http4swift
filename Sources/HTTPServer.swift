@@ -49,6 +49,14 @@ public struct HTTPServer {
         }
     }
 
+    public init?(port: UInt16) {
+        guard let socket = Socket() else {
+            return nil
+        }
+        let addr = SocketAddress(port: port)
+        self.init(socket: socket, addr: addr)
+    }
+
     // Nest handler - recommended
     public func serve(handler: Application) {
         serve { (req: HTTPRequest, writer: HTTPResponseWriter) throws in
