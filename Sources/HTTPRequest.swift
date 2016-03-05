@@ -42,7 +42,9 @@ public struct HTTPRequest: RequestType {
 
     public var body: String? {
         get {
-            return String.fromCString(bodyBytes)
+            var bytes = [Int8](bodyBytes)
+            bytes.append(0)
+            return String.fromCString(bytes)
         }
     }
 
