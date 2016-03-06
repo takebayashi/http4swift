@@ -14,13 +14,18 @@ let app: Application = { (request) -> ResponseType in
     // ...
 }
 
-let addr = SocketAddress(port: 8080)
-guard let sock = Socket() else {
-    return
-}
-guard let server = HTTPServer(socket: sock, addr: addr) else {
-    return
+guard let server = HTTPServer(port: 8080) else {
+    fatalError()
 }
 
 server.serve(app)
 ```
+
+## Versions
+
+- v0.3.x
+  * Nest 0.3 compatibility
+- v0.2.x
+  * Nest 0.2 compatibility
+- v0.1.x
+  * First release
