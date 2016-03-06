@@ -73,7 +73,7 @@ public struct HTTPServer {
                     let reader = FileReader(fileDescriptor: clientSocket)
                     let writer = HTTPResponseWriter(socket: clientSocket.rawDescriptor)
                     do {
-                        try handler(DefaultHTTPRequestParser().parse(reader), writer)
+                        try handler(DefaultHTTPRequestParser(reader: reader).parse(), writer)
                     }
                     catch let e {
                         fputs("error: \(e)\n", stderr)

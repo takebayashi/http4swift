@@ -23,6 +23,7 @@
 */
 
 import Nest
+import NestUtil
 import SwallowIO
 
 enum HTTPRequestParserError: ErrorType {
@@ -31,73 +32,82 @@ enum HTTPRequestParserError: ErrorType {
 
 protocol HTTPRequestParser {
 
-    func parse<R: Reader where R.Entry == Byte>(reader: R) throws -> HTTPRequest
+    func parse() throws -> HTTPRequest
 
 }
 
-class DefaultHTTPRequestParser: HTTPRequestParser {
+class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestParser {
 
-    static let CRLF = Character("\r\n")
+    var reader: R
 
-    enum Mode {
-        case First
-        case Header
-        case Empty
-        case Body
+    init(reader: R) {
+        self.reader = reader
     }
 
-    func parse<R: Reader where R.Entry == Byte>(reader: R) throws -> HTTPRequest {
-        let lineReader = LineBufferedReader(reader: reader)
-        var mode = Mode.First
-
-        var method: String?
-        var path: String?
-        var version: String?
+    func parse() throws -> HTTPRequest {
+        let requestLine = try getLineString()
+        let (method, path, version) = try parseRequestLine(requestLine)
         var headers = [Header]()
-        var body = [Int8]()
 
-        while let line = try lineReader.read() {
-            var bytes = line.map { CChar($0) }
-            bytes.append(0)
-            let str = (String.fromCString(bytes) ?? "").trimRight(DefaultHTTPRequestParser.CRLF)
-            switch mode {
-            case .First:
-                let fields = str.characters.split(" ", maxSplit: 3, allowEmptySlices: true)
-                method = String(fields[0])
-                path = String(fields[1])
-                version = String(fields[2])
-                mode = .Header
-            case .Header:
-                if str.isEmpty {
-                    mode = .Empty
-                }
-                else {
-                    let field = str.characters.split(":", maxSplit: 2, allowEmptySlices: true)
-                    let name = String(field[0])
-                    let value = String(field[1]).trimLeft(" ", maxCount: 1)
-                    headers.append(Header(name, value))
-                }
-            case .Empty:
-                mode = .Body
-                fallthrough
-            case .Body:
-                body.appendContentsOf(line.map { Int8($0) })
+        while true {
+            let headerLine = try getLineString()
+            if headerLine == "" {
+                break
+            }
+            headers.append(try parseHeaderLine(headerLine))
+        }
+
+        let contentLength = Int(headers["Content-Length"] ?? "0") ?? 0
+        var body = [Byte]()
+        if contentLength > 0 {
+            body = try reader.read(contentLength)
+        }
+
+        return HTTPRequest(method: method, path: path, version: version, headers: headers, body: body.map({ Int8($0) }))
+    }
+
+    func parseRequestLine(line: String) throws -> (String, String, String) {
+          let fields = line.characters.split(" ", maxSplit: 2, allowEmptySlices: true)
+          if fields.count != 3 {
+              throw HTTPRequestParserError.InvalidRequest(details: "Invalid request line")
+          }
+          let method = String(fields[0])
+          let path = String(fields[1])
+          let version = String(fields[2])
+          return (method, path, version)
+    }
+
+    func parseHeaderLine(line: String) throws -> (String, String) {
+        let field = line.characters.split(":", maxSplit: 1, allowEmptySlices: true)
+        if field.count != 2 {
+          print("error VV")
+            print(line)
+              print("error AA")
+            throw HTTPRequestParserError.InvalidRequest(details: "Invalid header")
+        }
+        let name = String(field[0])
+        let value = String(field[1]).trimLeft(" ", maxCount: 1)
+        return (name, value)
+    }
+
+    func getLineString() throws -> String {
+        let CRLF: [Byte] = [13, 10]
+        var buffer = try reader.read(until: CRLF)
+        while let last = buffer.last {
+            if last == Byte(10) || last == Byte(13) {
+                buffer.removeLast()
+            }
+            else {
+                break
             }
         }
-
-        guard let parsedMethod = method else {
-            throw HTTPRequestParserError.InvalidRequest(details: "Missing HTTP request method")
+        buffer.append(Byte(0))
+        return try buffer.map({ Int8($0) }).withUnsafeBufferPointer { bytes in
+            guard let string = String.fromCString(bytes.baseAddress) else {
+                throw HTTPRequestParserError.InvalidRequest(details: "Invalid request")
+            }
+            return string
         }
-
-        guard let parsedPath = path else {
-            throw HTTPRequestParserError.InvalidRequest(details: "Missing HTTP request path")
-        }
-
-        guard let parsedVersion = version else {
-            throw HTTPRequestParserError.InvalidRequest(details: "Missing HTTP request version")
-        }
-
-        return HTTPRequest(method: parsedMethod, path: parsedPath, version: parsedVersion, headers: headers, body: body)
     }
 
 }
