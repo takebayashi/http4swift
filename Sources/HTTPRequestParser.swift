@@ -62,6 +62,16 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
         if contentLength > 0 {
             body = try reader.read(contentLength)
         }
+        else if headers["Transfer-Encoding"] == "chunked" {
+            while true {
+                let lengthHex = try getLineString()
+                let chunkLength = Int(lengthHex, radix: 16) ?? 0
+                if chunkLength == 0 {
+                    break
+                }
+                body.appendContentsOf(try reader.read(chunkLength))
+            }
+        }
 
         return HTTPRequest(method: method, path: path, version: version, headers: headers, body: body.map({ Int8($0) }))
     }
