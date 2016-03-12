@@ -102,7 +102,7 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
 
     func getLineString() throws -> String {
         let CRLF: [Byte] = [13, 10]
-        var buffer = try reader.read(until: CRLF)
+        var buffer = try reader.readUntil(CRLF)
         while let last = buffer.last {
             if last == Byte(10) || last == Byte(13) {
                 buffer.removeLast()
@@ -111,8 +111,7 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
                 break
             }
         }
-        buffer.append(Byte(0))
-        return try buffer.map({ Int8($0) }).withUnsafeBufferPointer { bytes in
+        return try buffer.nullTerminated().map({ Int8($0) }).withUnsafeBufferPointer { bytes in
             guard let string = String.fromCString(bytes.baseAddress) else {
                 throw HTTPRequestParserError.InvalidRequest(details: "Invalid request")
             }
