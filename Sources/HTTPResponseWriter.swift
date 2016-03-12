@@ -68,14 +68,19 @@ public class HTTPResponseWriter {
                 lengthWrote = true
             }
         }
-        if !lengthWrote {
-            if let bytes = response.body?.bytes() {
-                try write("Content-Length: \(bytes.count - 1)\r\n")
+        var body = [UInt8]()
+        if var payload = response.body {
+            while let chunk = payload.next() {
+                body.appendContentsOf(chunk)
             }
         }
+
+        if !lengthWrote {
+            try write("Content-Length: \(body.count - 1)\r\n")
+        }
         try write("\r\n")
-        if let body = response.body?.bytes() {
-            try write(body)
+        try body.map({ return Int8($0) }).withUnsafeBufferPointer { buffer in
+            try self.write(buffer.baseAddress)
         }
     }
 

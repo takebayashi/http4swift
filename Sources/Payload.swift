@@ -24,29 +24,23 @@
 
 import Nest
 
-public struct HTTPRequest: RequestType {
+class FixedPayload: PayloadType {
 
-    public let method: String
-    public let path: String
-    public let proto: String
-    public let headers: [Header]
-    public let bodyBytes: [Int8]
+    let content: [UInt8]
 
-    init(method: String, path: String, version: String, headers: [Header], body: [Int8]) {
-        self.method = method
-        self.path = path
-        self.proto = version
-        self.headers = headers
-        self.bodyBytes = body
+    var completed = false
+
+    init(content: [UInt8]) {
+        self.content = content
     }
 
-    public var body: PayloadType? {
-        get {
-            return FixedPayload(content: bodyBytes.map({ UInt8($0) }))
+    func next() -> [UInt8]? {
+        if !completed {
+            completed = true
+            return content
         }
-        set {
-            // not implemented
+        else {
+            return nil
         }
     }
-
 }
