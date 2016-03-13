@@ -29,26 +29,32 @@
 #endif
 
 import Nest
+import SwallowIO
 
 public typealias HTTPHandler = (HTTPRequest, HTTPResponseWriter) throws -> ()
 
 public struct HTTPServer {
 
-    var socket: Socket
-    var address: SocketAddress
+    var server: TCPServer
 
     public init?(socket: Socket, addr: SocketAddress) {
-        self.socket = socket
-        self.address = addr
-
         socket.setOption(SO_REUSEADDR, value: 1)
-#if !os(Linux)
-        socket.setOption(SO_NOSIGPIPE, value: 1)
-#endif
-
-        if !socket.bindAddress(&address.underlying, length: socklen_t(UInt8(sizeof(sockaddr_in)))) {
+        #if !os(Linux)
+            socket.setOption(SO_NOSIGPIPE, value: 1)
+        #endif
+        if let server = TCPServer(socket: socket, address: addr) {
+            self.server = server
+        } else {
             return nil
         }
+    }
+
+    public init?(port: UInt16) {
+        guard let socket = Socket() else {
+            return nil
+        }
+        let addr = SocketAddress(port: port)
+        self.init(socket: socket, addr: addr)
     }
 
     // Nest handler - recommended
@@ -61,19 +67,20 @@ public struct HTTPServer {
 
     // native handler
     public func serve(handler: HTTPHandler) {
-        while (true) {
-            if (listen(socket.raw, 100) != 0) {
-                return
-            }
-            let client = accept(socket.raw, nil, nil)
-            defer {
-                shutdown(client, Int32(SHUT_RDWR))
-                close(client)
-            }
-            let reader = SocketReader(socket: Socket(raw: client))
-            let writer = HTTPResponseWriter(socket: client)
+        while true {
             do {
-                try handler(DefaultHTTPRequestParser().parse(reader), writer)
+                try server.acceptClient { (clientSocket, clientAddr) in
+                    let reader = FileReader(fileDescriptor: clientSocket)
+                    let writer = HTTPResponseWriter(socket: clientSocket.rawDescriptor)
+                    do {
+                        try handler(DefaultHTTPRequestParser(reader: reader).parse(), writer)
+                    }
+                    catch let e {
+                        fputs("error: \(e)\n", stderr)
+                        return false
+                    }
+                    return true
+                }
             }
             catch let e {
                 fputs("error: \(e)\n", stderr)

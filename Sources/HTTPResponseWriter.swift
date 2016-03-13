@@ -42,14 +42,14 @@ public class HTTPResponseWriter {
         self.socket = socket
     }
 
-    public func write(bytes: UnsafePointer<Int8>) throws {
+    public func write(bytes: UnsafePointer<Int8>, length: Int? = nil) throws {
 #if os(Linux)
         let flags = Int32(MSG_NOSIGNAL)
 #else
         let flags = Int32(0)
 #endif
 
-        var rest = Int(strlen(bytes))
+        var rest = length ?? Int(strlen(bytes))
         while rest > 0 {
             let sent = send(socket, bytes, rest, flags)
             if sent < 0 {
@@ -68,14 +68,19 @@ public class HTTPResponseWriter {
                 lengthWrote = true
             }
         }
-        if !lengthWrote {
-            if let bytes = response.body?.bytes() {
-                try write("Content-Length: \(bytes.count - 1)\r\n")
+        var body = [UInt8]()
+        if var payload = response.body {
+            while let chunk = payload.next() {
+                body.appendContentsOf(chunk)
             }
         }
+
+        if !lengthWrote {
+            try write("Content-Length: \(body.count)\r\n")
+        }
         try write("\r\n")
-        if let body = response.body?.bytes() {
-            try write(body)
+        try body.map({ return Int8($0) }).withUnsafeBufferPointer { buffer in
+            try self.write(buffer.baseAddress, length: buffer.count)
         }
     }
 
