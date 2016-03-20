@@ -30,7 +30,7 @@ import Nest
     import Glibc
 #endif
 
-enum WriterError: ErrorType {
+enum WriterError: ErrorProtocol {
     case GenericError(error: Int32)
 }
 
@@ -71,7 +71,7 @@ public class HTTPResponseWriter {
         var body = [UInt8]()
         if var payload = response.body {
             while let chunk = payload.next() {
-                body.appendContentsOf(chunk)
+                body.append(contentsOf: chunk)
             }
         }
 

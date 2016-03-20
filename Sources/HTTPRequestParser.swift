@@ -26,7 +26,7 @@ import Nest
 import NestUtil
 import SwallowIO
 
-enum HTTPRequestParserError: ErrorType {
+enum HTTPRequestParserError: ErrorProtocol {
     case InvalidRequest(details: String)
 }
 
@@ -69,7 +69,7 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
                 if chunkLength == 0 {
                     break
                 }
-                body.appendContentsOf(try reader.read(chunkLength))
+                body.append(contentsOf: try reader.read(chunkLength))
             }
         }
 
@@ -77,7 +77,7 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
     }
 
     func parseRequestLine(line: String) throws -> (String, String, String) {
-          let fields = line.characters.split(" ", maxSplit: 2, allowEmptySlices: true)
+          let fields = line.characters.split(separator: " ", maxSplits: 2, omittingEmptySubsequences: false)
           if fields.count != 3 {
               throw HTTPRequestParserError.InvalidRequest(details: "Invalid request line")
           }
@@ -88,7 +88,7 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
     }
 
     func parseHeaderLine(line: String) throws -> (String, String) {
-        let field = line.characters.split(":", maxSplit: 1, allowEmptySlices: true)
+        let field = line.characters.split(separator: ":", maxSplits: 1, omittingEmptySubsequences: false)
         if field.count != 2 {
           print("error VV")
             print(line)
@@ -111,11 +111,8 @@ class DefaultHTTPRequestParser<R: Reader where R.Entry == Byte>: HTTPRequestPars
                 break
             }
         }
-        return try buffer.nullTerminated().map({ Int8($0) }).withUnsafeBufferPointer { bytes in
-            guard let string = String.fromCString(bytes.baseAddress) else {
-                throw HTTPRequestParserError.InvalidRequest(details: "Invalid request")
-            }
-            return string
+        return buffer.nullTerminated().map({ Int8($0) }).withUnsafeBufferPointer { bytes in
+            return String(cString: bytes.baseAddress)
         }
     }
 

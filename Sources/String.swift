@@ -29,7 +29,7 @@ extension String {
             return ""
         }
         if self[self.startIndex] == char {
-            let sub = self[self.startIndex.advancedBy(1)..<self.endIndex]
+            let sub = self[self.startIndex.advanced(by: 1)..<self.endIndex]
             if maxCount == 1 {
                 return sub
             }
@@ -59,12 +59,12 @@ extension String {
         withCString { raw in
             var bytes = raw
             while true {
-                let byte = bytes.memory
+                let byte = bytes.pointee
                 buffer.append(byte)
                 if byte == 0 {
                     break
                 }
-                bytes = bytes.advancedBy(1)
+                bytes = bytes.advanced(by: 1)
             }
         }
         return buffer
